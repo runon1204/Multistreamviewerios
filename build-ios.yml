@@ -1,0 +1,55 @@
+name: Build iOS (unsigned)
+
+# 手動実行、またはmainブランチへのpushで自動実行
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: macos-14
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project (.xcodeproj)
+        run: xcodegen generate
+
+      - name: Build unsigned .app
+        # 署名(証明書・プロビジョニングプロファイル)はここでは行わない。
+        # 未署名のままビルドし、後段でSideloadlyが実機インストール時に
+        # 無料Apple IDを使って署名する想定。
+        run: |
+          set -e
+          xcodebuild \
+            -project MultiStreamViewer.xcodeproj \
+            -scheme MultiStreamViewer \
+            -sdk iphoneos \
+            -configuration Release \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            clean build
+
+      - name: Package unsigned .ipa
+        run: |
+          set -e
+          APP_PATH=$(find build/Build/Products -maxdepth 2 -name "*.app" | head -n 1)
+          if [ -z "$APP_PATH" ]; then
+            echo "ERROR: .app bundle not found"
+            exit 1
+          fi
+          echo "Found app at: $APP_PATH"
+          mkdir -p Payload
+          cp -R "$APP_PATH" Payload/
+          zip -r MultiStreamViewer-unsigned.ipa Payload
+
+      - name: Upload .ipa artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MultiStreamViewer-unsigned-ipa
+          path: MultiStreamViewer-unsigned.ipa

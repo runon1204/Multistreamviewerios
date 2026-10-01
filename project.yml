@@ -1,0 +1,21 @@
+name: MultiStreamViewer
+options:
+  bundleIdPrefix: com.streamgrid
+targets:
+  MultiStreamViewer:
+    type: application
+    platform: iOS
+    deploymentTarget: "15.0"
+    sources:
+      - path: MultiStreamViewer
+        excludes:
+          - Info.plist
+    info:
+      path: MultiStreamViewer/Info.plist
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.streamgrid.viewer
+        MARKETING_VERSION: "0.1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        SWIFT_VERSION: "5.0"
+        TARGETED_DEVICE_FAMILY: "1,2"
